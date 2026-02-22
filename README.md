@@ -9,10 +9,23 @@ A simple unity procedural room generation system that uses binary space partitio
 
 ## Quick Start
 
-1. Add the `House.cs` component to an empty GameObject
-2. Assign furniture prefabs (optional)
-3. Adjust parameters in the Inspector
-4. The house generates automatically in Edit Mode
+### Clone and Open in Unity
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Joshimello/procedural-rooms.git
+   ```
+2. Open Unity Hub and click "Add project from disk"
+3. Navigate to the cloned `procedural-rooms` folder and select it
+4. Open the project with Unity 2018.4 LTS or newer
+
+### Using the Generator
+
+1. Create a new scene or open an existing one
+2. Add the `House.cs` component to an empty GameObject
+3. Assign furniture prefabs (optional)
+4. Adjust parameters in the Inspector
+5. The house generates automatically in Edit Mode
 
 ## Parameters
 
