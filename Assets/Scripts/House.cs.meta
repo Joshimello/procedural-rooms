@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 78a4343b41bf946918252fe79dcbaf40
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - livingRoomTablePrefab: {fileID: 1921134298780552420, guid: 3717d20411ce253488b4bd05075e76e0, type: 3}
+  - livingRoomChairPrefab: {fileID: 4250187047306314854, guid: 31cd14d2cfa3e824b8f833492d2375e9, type: 3}
+  - bedroomBedPrefab: {fileID: 5519352734206757565, guid: b0b811b53542f7247b7ae5018306b4a3, type: 3}
+  - bedroomClosetPrefab: {fileID: 3636447092435093750, guid: a92370e683f14d440b1ac5ec3be49939, type: 3}
+  - toiletBathtubPrefab: {fileID: 6730541388818719154, guid: daf67117dfce8e74e80c40191f7129df, type: 3}
+  - toiletCarpetPrefab: {fileID: 1505917622789879436, guid: 26864ecd579e59b49a4f8dd63461ed3a, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
