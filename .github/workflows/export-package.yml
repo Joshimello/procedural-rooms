@@ -1,0 +1,37 @@
+name: Export Unity Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  export:
+    name: Export .unitypackage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Export package
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.6f1
+          targetPlatform: StandaloneLinux64
+          buildMethod: PackageExporter.ExportBatch
+          versioning: None
+
+      - name: Rename package to include tag
+        run: mv ProceduralRooms.unitypackage ProceduralRooms-${{ github.ref_name }}.unitypackage
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ProceduralRooms-${{ github.ref_name }}.unitypackage
