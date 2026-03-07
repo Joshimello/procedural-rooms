@@ -172,41 +172,23 @@ public static class RoomLayoutBuilder
 
     private static bool ChooseSplitDirection(Rect rect, System.Random rng)
     {
-        float ratio = rect.width / rect.height;
-        if (ratio >= 1.25f)
-        {
-            return true;
-        }
-
-        if (ratio <= 0.8f)
-        {
-            return false;
-        }
-
-        return rng.NextDouble() > 0.5;
+        // TODO#1
+        // Calculate the ratio of width to height
+        // If the rect is wide (ratio >= 1.25), split vertically (return true)
+        // If the rect is tall (ratio <= 0.8), split horizontally (return false)
+        // Otherwise, split randomly
+        throw new System.NotImplementedException();
     }
 
     private static int FindSplittablePartition(List<Rect> partitions, Vector2 minRoomSize, System.Random rng)
     {
-        var candidates = new List<int>();
-
-        for (int i = 0; i < partitions.Count; i++)
-        {
-            Rect rect = partitions[i];
-            bool canSplitWidth = rect.width >= minRoomSize.x * 2f;
-            bool canSplitHeight = rect.height >= minRoomSize.y * 2f;
-
-            if (canSplitWidth || canSplitHeight)
-            {
-                candidates.Add(i);
-            }
-        }
-
-        if (candidates.Count == 0)
-        {
-            return -1;
-        }
-
-        return candidates[rng.Next(candidates.Count)];
+        // TODO#2
+        // Create an empty list of candidate indices
+        // Loop through all partitions:
+        //   A partition can be split if its width >= minRoomSize.x * 2 OR height >= minRoomSize.y * 2
+        //   If so, add its index to candidates
+        // If no candidates, return -1 (signals the BSP loop to stop)
+        // Otherwise, return a random index from candidates
+        throw new System.NotImplementedException();
     }
 }

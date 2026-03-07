@@ -163,23 +163,20 @@ public static class HouseMeshBuilder
         List<Vector2> uvs,
         List<int> triangles)
     {
-        Vector3 half = size * 0.5f;
-
-        Vector3 p0 = center + rotation * new Vector3(-half.x, -half.y, -half.z);
-        Vector3 p1 = center + rotation * new Vector3(half.x, -half.y, -half.z);
-        Vector3 p2 = center + rotation * new Vector3(half.x, -half.y, half.z);
-        Vector3 p3 = center + rotation * new Vector3(-half.x, -half.y, half.z);
-        Vector3 p4 = center + rotation * new Vector3(-half.x, half.y, -half.z);
-        Vector3 p5 = center + rotation * new Vector3(half.x, half.y, -half.z);
-        Vector3 p6 = center + rotation * new Vector3(half.x, half.y, half.z);
-        Vector3 p7 = center + rotation * new Vector3(-half.x, half.y, half.z);
-
-        AddFace(p3, p2, p6, p7, rotation * Vector3.forward, vertices, normals, uvs, triangles); // Front
-        AddFace(p1, p0, p4, p5, rotation * Vector3.back, vertices, normals, uvs, triangles);    // Back
-        AddFace(p0, p3, p7, p4, rotation * Vector3.left, vertices, normals, uvs, triangles);    // Left
-        AddFace(p2, p1, p5, p6, rotation * Vector3.right, vertices, normals, uvs, triangles);   // Right
-        AddFace(p4, p7, p6, p5, rotation * Vector3.up, vertices, normals, uvs, triangles);      // Top
-        AddFace(p0, p1, p2, p3, rotation * Vector3.down, vertices, normals, uvs, triangles);    // Bottom
+        // TODO#4
+        // Compute half-extents from size
+        // Compute 8 corner points (p0–p7) by combining ±half.x, ±half.y, ±half.z,
+        //   each rotated by 'rotation' and offset by 'center'
+        //   p0 = (-x, -y, -z), p1 = (+x, -y, -z), p2 = (+x, -y, +z), p3 = (-x, -y, +z)  [bottom]
+        //   p4 = (-x, +y, -z), p5 = (+x, +y, -z), p6 = (+x, +y, +z), p7 = (-x, +y, +z)  [top]
+        // Call AddFace 6 times, one per side, using the correct 4 corners and rotated normal:
+        //   Front (+Z): p3, p2, p6, p7
+        //   Back  (-Z): p1, p0, p4, p5
+        //   Left  (-X): p0, p3, p7, p4
+        //   Right (+X): p2, p1, p5, p6
+        //   Top   (+Y): p4, p7, p6, p5
+        //   Bottom(-Y): p0, p1, p2, p3
+        throw new System.NotImplementedException();
     }
 
     private static void AddFace(
@@ -193,28 +190,12 @@ public static class HouseMeshBuilder
         List<Vector2> uvs,
         List<int> triangles)
     {
-        int index = vertices.Count;
-
-        vertices.Add(v0);
-        vertices.Add(v1);
-        vertices.Add(v2);
-        vertices.Add(v3);
-
-        normals.Add(normal);
-        normals.Add(normal);
-        normals.Add(normal);
-        normals.Add(normal);
-
-        uvs.Add(new Vector2(0f, 0f));
-        uvs.Add(new Vector2(1f, 0f));
-        uvs.Add(new Vector2(1f, 1f));
-        uvs.Add(new Vector2(0f, 1f));
-
-        triangles.Add(index + 0);
-        triangles.Add(index + 1);
-        triangles.Add(index + 2);
-        triangles.Add(index + 0);
-        triangles.Add(index + 2);
-        triangles.Add(index + 3);
+        // TODO#3
+        // Record the current vertex count as 'index' (so triangle indices are relative to this face)
+        // Add the 4 corner vertices (v0, v1, v2, v3) to the vertices list
+        // Add the same normal 4 times (one per vertex)
+        // Add UVs: (0,0), (1,0), (1,1), (0,1) — bottom-left going counter-clockwise
+        // Add 2 triangles (6 indices): triangle 1 = (0,1,2), triangle 2 = (0,2,3)
+        throw new System.NotImplementedException();
     }
 }
