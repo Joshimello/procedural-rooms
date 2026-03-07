@@ -18,20 +18,12 @@ public static class RoomLayoutBuilder
         public Rect bounds;
     }
 
-    [Serializable]
-    public struct WallSegment
-    {
-        public Vector2 start;
-        public Vector2 end;
-        public float thickness;
-    }
-
     public sealed class LayoutResult
     {
         public readonly List<RoomSpec> rooms;
-        public readonly List<WallSegment> interiorWalls;
+        public readonly List<HouseMeshBuilder.WallSegment> interiorWalls;
 
-        public LayoutResult(List<RoomSpec> rooms, List<WallSegment> interiorWalls)
+        public LayoutResult(List<RoomSpec> rooms, List<HouseMeshBuilder.WallSegment> interiorWalls)
         {
             this.rooms = rooms;
             this.interiorWalls = interiorWalls;
@@ -63,7 +55,7 @@ public static class RoomLayoutBuilder
             new Rect(-houseWidth * 0.5f, -houseLength * 0.5f, houseWidth, houseLength)
         };
 
-        var interiorWalls = new List<WallSegment>();
+        var interiorWalls = new List<HouseMeshBuilder.WallSegment>();
 
         for (int i = 0; i < iterations; i++)
         {
@@ -94,7 +86,7 @@ public static class RoomLayoutBuilder
                 partitions[splitIndex] = left;
                 partitions.Add(right);
 
-                interiorWalls.Add(new WallSegment
+                interiorWalls.Add(new HouseMeshBuilder.WallSegment
                 {
                     start = new Vector2(splitX, rect.yMin),
                     end = new Vector2(splitX, rect.yMax),
@@ -119,7 +111,7 @@ public static class RoomLayoutBuilder
                 partitions[splitIndex] = bottom;
                 partitions.Add(top);
 
-                interiorWalls.Add(new WallSegment
+                interiorWalls.Add(new HouseMeshBuilder.WallSegment
                 {
                     start = new Vector2(rect.xMin, splitZ),
                     end = new Vector2(rect.xMax, splitZ),

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -196,9 +195,8 @@ public class House : MonoBehaviour
 
         if (generateInteriorWalls)
         {
-            var wallSegments = ConvertWallSegments(layout.interiorWalls);
             interiorFilter.sharedMesh = HouseMeshBuilder.BuildInteriorWalls(
-                wallSegments,
+                layout.interiorWalls,
                 wallHeight,
                 floorThickness,
                 interiorMesh
@@ -278,362 +276,26 @@ public class House : MonoBehaviour
         return go.transform;
     }
 
-    private List<HouseMeshBuilder.WallSegment> ConvertWallSegments(List<RoomLayoutBuilder.WallSegment> walls)
-    {
-        var result = new List<HouseMeshBuilder.WallSegment>();
-        for (int i = 0; i < walls.Count; i++)
-        {
-            RoomLayoutBuilder.WallSegment wall = walls[i];
-            result.Add(new HouseMeshBuilder.WallSegment
-            {
-                start = wall.start,
-                end = wall.end,
-                thickness = wall.thickness
-            });
-        }
-
-        return result;
-    }
-
     private void BuildRoomPrefabs(List<RoomLayoutBuilder.RoomSpec> rooms, int seed)
     {
         Transform roomsRoot = GetOrCreateChild(RoomsName);
         ClearChildren(roomsRoot);
 
-        var rng = new System.Random(seed ^ rooms.Count);
-
-        for (int i = 0; i < rooms.Count; i++)
+        RoomFurniturePlacer.Populate(rooms, seed, roomsRoot, transform.position, new RoomFurniturePlacer.Config
         {
-            RoomLayoutBuilder.RoomSpec room = rooms[i];
-
-            GameObject roomGO = new GameObject($"Room_{i}");
-            roomGO.transform.SetParent(roomsRoot, false);
-            roomGO.transform.position = transform.position + new Vector3(room.center.x, 0f, room.center.y);
-
-            RoomType type = (RoomType)rng.Next(0, Enum.GetValues(typeof(RoomType)).Length);
-            switch (type)
-            {
-                case RoomType.LivingRoom:
-                    PlaceLivingRoom(room, roomGO.transform);
-                    break;
-                case RoomType.Bedroom:
-                    PlaceBedroom(room, roomGO.transform, rng);
-                    break;
-                case RoomType.Toilet:
-                    PlaceToilet(room, roomGO.transform, rng);
-                    break;
-            }
-        }
-    }
-
-    private void PlaceLivingRoom(RoomLayoutBuilder.RoomSpec room, Transform parent)
-    {
-        if (livingRoomTablePrefab != null)
-        {
-            float baseInset = Mathf.Max(wallThickness, interiorWallThickness) * 0.5f + wallInset;
-            float maxInset = Mathf.Min(room.bounds.width, room.bounds.height) * 0.5f;
-            float inset = Mathf.Min(baseInset, maxInset);
-            float clampedX = Mathf.Clamp(room.center.x, room.bounds.xMin + inset, room.bounds.xMax - inset);
-            float clampedZ = Mathf.Clamp(room.center.y, room.bounds.yMin + inset, room.bounds.yMax - inset);
-            Vector3 roomWorldOffset = transform.position;
-            Vector3 tablePos = new Vector3(clampedX + roomWorldOffset.x, roomWorldOffset.y + floorThickness + itemYOffset, clampedZ + roomWorldOffset.z);
-            GameObject tableInstance = InstantiatePrefab(livingRoomTablePrefab, tablePos, Quaternion.identity, parent);
-            PostAdjustToFloor(tableInstance);
-            CenterInstanceToRoomCenter(tableInstance, room);
-            ClampInstanceToRoomBounds(tableInstance, room);
-        }
-
-        if (livingRoomChairPrefab != null)
-        {
-            float baseInset = Mathf.Max(wallThickness, interiorWallThickness) * 0.5f + wallInset;
-            float maxInset = Mathf.Min(room.bounds.width, room.bounds.height) * 0.5f;
-            float inset = Mathf.Min(baseInset, maxInset);
-            float maxRadius = Mathf.Min((room.bounds.width * 0.5f) - inset, (room.bounds.height * 0.5f) - inset);
-            if (maxRadius <= 0.05f)
-            {
-                return;
-            }
-
-            float radius = Mathf.Min(chairRadius, maxRadius);
-            float clampedX = Mathf.Clamp(room.center.x, room.bounds.xMin + inset, room.bounds.xMax - inset);
-            float clampedZ = Mathf.Clamp(room.center.y, room.bounds.yMin + inset, room.bounds.yMax - inset);
-            Vector3 roomWorldOffset = transform.position;
-            Vector3 center = new Vector3(clampedX + roomWorldOffset.x, roomWorldOffset.y + floorThickness + itemYOffset, clampedZ + roomWorldOffset.z);
-
-            Vector3[] offsets =
-            {
-                new Vector3(radius, 0f, 0f),
-                new Vector3(-radius, 0f, 0f),
-                new Vector3(0f, 0f, radius),
-                new Vector3(0f, 0f, -radius)
-            };
-
-            for (int i = 0; i < offsets.Length; i++)
-            {
-                Vector3 pos = center + offsets[i];
-                Quaternion rot = Quaternion.LookRotation((center - pos).normalized, Vector3.up);
-                GameObject chairInstance = InstantiatePrefab(livingRoomChairPrefab, pos, rot, parent);
-                PostAdjustToFloor(chairInstance);
-                ClampInstanceToRoomBounds(chairInstance, room);
-            }
-        }
-    }
-
-    private void PlaceBedroom(RoomLayoutBuilder.RoomSpec room, Transform parent, System.Random rng)
-    {
-        WallSide bedSide = GetRandomWall(rng);
-        WallSide closetSide = GetDifferentWall(bedSide, rng);
-
-        PlaceWallItem(bedroomBedPrefab, room, bedSide, parent);
-        PlaceWallItem(bedroomClosetPrefab, room, closetSide, parent);
-    }
-
-    private void PlaceToilet(RoomLayoutBuilder.RoomSpec room, Transform parent, System.Random rng)
-    {
-        WallSide tubSide = GetRandomWall(rng);
-        WallSide carpetSide = GetDifferentWall(tubSide, rng);
-
-        PlaceWallItem(toiletBathtubPrefab, room, tubSide, parent);
-        PlaceWallItem(toiletCarpetPrefab, room, carpetSide, parent);
-    }
-
-    private void PlaceWallItem(GameObject prefab, RoomLayoutBuilder.RoomSpec room, WallSide side, Transform parent)
-    {
-        if (prefab == null)
-        {
-            return;
-        }
-
-        Vector3 pos;
-        Quaternion rot;
-        GetWallPlacement(room, side, out pos, out rot);
-
-        GameObject instance = InstantiatePrefab(prefab, pos, rot, parent);
-        PostAdjustToFloor(instance);
-        AlignToWallWithBounds(instance, room, side, rot);
-        ClampInstanceToRoomBounds(instance, room);
-    }
-
-    private void GetWallPlacement(RoomLayoutBuilder.RoomSpec room, WallSide side, out Vector3 position, out Quaternion rotation)
-    {
-        float baseInset = Mathf.Max(wallThickness, interiorWallThickness) * 0.5f + wallInset;
-        float maxInset = Mathf.Min(room.bounds.width, room.bounds.height) * 0.5f;
-        float inset = Mathf.Min(baseInset, maxInset);
-        float y = transform.position.y + floorThickness + itemYOffset;
-
-        float clampedX = Mathf.Clamp(room.center.x, room.bounds.xMin + inset, room.bounds.xMax - inset);
-        float clampedZ = Mathf.Clamp(room.center.y, room.bounds.yMin + inset, room.bounds.yMax - inset);
-        Vector3 roomWorldOffset = transform.position;
-
-        switch (side)
-        {
-            case WallSide.North:
-                position = new Vector3(clampedX + roomWorldOffset.x, y, room.bounds.yMax + roomWorldOffset.z - inset);
-                rotation = Quaternion.LookRotation(Vector3.back, Vector3.up);
-                break;
-            case WallSide.South:
-                position = new Vector3(clampedX + roomWorldOffset.x, y, room.bounds.yMin + roomWorldOffset.z + inset);
-                rotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
-                break;
-            case WallSide.East:
-                position = new Vector3(room.bounds.xMax + roomWorldOffset.x - inset, y, clampedZ + roomWorldOffset.z);
-                rotation = Quaternion.LookRotation(Vector3.left, Vector3.up);
-                break;
-            case WallSide.West:
-                position = new Vector3(room.bounds.xMin + roomWorldOffset.x + inset, y, clampedZ + roomWorldOffset.z);
-                rotation = Quaternion.LookRotation(Vector3.right, Vector3.up);
-                break;
-            default:
-                position = new Vector3(clampedX + roomWorldOffset.x, y, clampedZ + roomWorldOffset.z);
-                rotation = Quaternion.identity;
-                break;
-        }
-    }
-
-    private static WallSide GetRandomWall(System.Random rng)
-    {
-        return (WallSide)rng.Next(0, 4);
-    }
-
-    private static WallSide GetDifferentWall(WallSide current, System.Random rng)
-    {
-        WallSide next = current;
-        while (next == current)
-        {
-            next = (WallSide)rng.Next(0, 4);
-        }
-
-        return next;
-    }
-
-    private static GameObject InstantiatePrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
-    {
-        GameObject instance = Instantiate(prefab, position, rotation, parent);
-        instance.name = prefab.name;
-        return instance;
-    }
-
-    private void PostAdjustToFloor(GameObject instance)
-    {
-        if (instance == null)
-        {
-            return;
-        }
-
-        if (!TryGetBounds(instance, out Bounds bounds))
-        {
-            return;
-        }
-
-        float y = transform.position.y + floorThickness + itemYOffset;
-        float delta = y - bounds.min.y;
-        if (Mathf.Abs(delta) > 0.0001f)
-        {
-            instance.transform.position += new Vector3(0f, delta, 0f);
-        }
-    }
-
-    private void PostAdjustToWall(GameObject instance, Quaternion rotation)
-    {
-        if (instance == null)
-        {
-            return;
-        }
-
-        if (!TryGetBounds(instance, out Bounds bounds))
-        {
-            return;
-        }
-
-        Vector3 forward = rotation * Vector3.forward;
-        Vector3 absForward = new Vector3(Mathf.Abs(forward.x), Mathf.Abs(forward.y), Mathf.Abs(forward.z));
-        float depth = Vector3.Dot(bounds.extents, absForward);
-
-        if (depth > 0.0001f)
-        {
-            instance.transform.position += forward * depth;
-        }
-    }
-
-    private void AlignToWallWithBounds(GameObject instance, RoomLayoutBuilder.RoomSpec room, WallSide side, Quaternion rotation)
-    {
-        if (instance == null)
-        {
-            return;
-        }
-
-        if (!TryGetBounds(instance, out Bounds bounds))
-        {
-            PostAdjustToWall(instance, rotation);
-            return;
-        }
-
-        float baseInset = Mathf.Max(wallThickness, interiorWallThickness) * 0.5f + wallInset;
-        Vector3 offset = bounds.center - instance.transform.position;
-        Vector3 pos = instance.transform.position;
-        Vector3 roomWorldOffset = transform.position;
-
-        switch (side)
-        {
-            case WallSide.North:
-                pos.z = (room.bounds.yMax + roomWorldOffset.z - baseInset - bounds.extents.z) - offset.z;
-                break;
-            case WallSide.South:
-                pos.z = (room.bounds.yMin + roomWorldOffset.z + baseInset + bounds.extents.z) - offset.z;
-                break;
-            case WallSide.East:
-                pos.x = (room.bounds.xMax + roomWorldOffset.x - baseInset - bounds.extents.x) - offset.x;
-                break;
-            case WallSide.West:
-                pos.x = (room.bounds.xMin + roomWorldOffset.x + baseInset + bounds.extents.x) - offset.x;
-                break;
-        }
-
-        instance.transform.position = pos;
-    }
-
-    private void CenterInstanceToRoomCenter(GameObject instance, RoomLayoutBuilder.RoomSpec room)
-    {
-        if (instance == null)
-        {
-            return;
-        }
-
-        if (!TryGetBounds(instance, out Bounds bounds))
-        {
-            return;
-        }
-
-        Vector3 offset = bounds.center - instance.transform.position;
-        Vector3 roomWorldCenter = new Vector3(room.center.x, bounds.center.y, room.center.y) + transform.position;
-        instance.transform.position = roomWorldCenter - offset;
-    }
-
-    private void ClampInstanceToRoomBounds(GameObject instance, RoomLayoutBuilder.RoomSpec room)
-    {
-        if (instance == null)
-        {
-            return;
-        }
-
-        if (!TryGetBounds(instance, out Bounds bounds))
-        {
-            return;
-        }
-
-        float baseInset = Mathf.Max(wallThickness, interiorWallThickness) * 0.5f + wallInset;
-        Vector3 roomWorldOffset = transform.position;
-
-        float minX = room.bounds.xMin + roomWorldOffset.x + baseInset;
-        float maxX = room.bounds.xMax + roomWorldOffset.x - baseInset;
-        float minZ = room.bounds.yMin + roomWorldOffset.z + baseInset;
-        float maxZ = room.bounds.yMax + roomWorldOffset.z - baseInset;
-
-        float extX = bounds.extents.x;
-        float extZ = bounds.extents.z;
-
-        float xMin = minX + extX;
-        float xMax = maxX - extX;
-        float zMin = minZ + extZ;
-        float zMax = maxZ - extZ;
-
-        if (xMax < xMin)
-        {
-            float mid = (minX + maxX) * 0.5f;
-            xMin = mid;
-            xMax = mid;
-        }
-
-        if (zMax < zMin)
-        {
-            float mid = (minZ + maxZ) * 0.5f;
-            zMin = mid;
-            zMax = mid;
-        }
-
-        Vector3 offset = bounds.center - instance.transform.position;
-        Vector3 center = bounds.center;
-        center.x = Mathf.Clamp(center.x, xMin, xMax);
-        center.z = Mathf.Clamp(center.z, zMin, zMax);
-        instance.transform.position = center - offset;
-    }
-
-    private static bool TryGetBounds(GameObject instance, out Bounds bounds)
-    {
-        Renderer[] renderers = instance.GetComponentsInChildren<Renderer>();
-        if (renderers == null || renderers.Length == 0)
-        {
-            bounds = default;
-            return false;
-        }
-
-        bounds = renderers[0].bounds;
-        for (int i = 1; i < renderers.Length; i++)
-        {
-            bounds.Encapsulate(renderers[i].bounds);
-        }
-
-        return true;
+            wallThickness = wallThickness,
+            interiorWallThickness = interiorWallThickness,
+            floorThickness = floorThickness,
+            wallInset = wallInset,
+            itemYOffset = itemYOffset,
+            chairRadius = chairRadius,
+            livingRoomTablePrefab = livingRoomTablePrefab,
+            livingRoomChairPrefab = livingRoomChairPrefab,
+            bedroomBedPrefab = bedroomBedPrefab,
+            bedroomClosetPrefab = bedroomClosetPrefab,
+            toiletBathtubPrefab = toiletBathtubPrefab,
+            toiletCarpetPrefab = toiletCarpetPrefab,
+        });
     }
 
     private void ClearChildren(Transform parent)
@@ -660,18 +322,4 @@ public class House : MonoBehaviour
         }
     }
 
-    private enum RoomType
-    {
-        LivingRoom = 0,
-        Bedroom = 1,
-        Toilet = 2
-    }
-
-    private enum WallSide
-    {
-        North = 0,
-        South = 1,
-        East = 2,
-        West = 3
-    }
 }
